@@ -12,7 +12,6 @@ var aceEditor = (
             this.selectAll = this.selectAll.bind(this);
             this.undo = this.undo.bind(this);
             this.redo = this.redo.bind(this);
-            this.aaa = this.aaa.bind(this);
         }
 
         aceEditor.prototype.init = function () {
@@ -82,17 +81,7 @@ var aceEditor = (
             return this;
         };
 
-        aceEditor.prototype.aaa = function (e) {
-            console.log('zz');
-            this.editor.onCompositionEnd();
-        };
-
         aceEditor.prototype.bindEvents = function () {
-            this.editor.on('change', this.aaa);
-            document.querySelector('.ace_text-input').addEventListener('compositionupdate', function(e) {
-                console.log('compositionupdate', e);
-                document.querySelector('.ace_text-input').dispatchEvent(new CompositionEvent('compositionend'))
-            })
             this.saveBtnEl.addEventListener('click', this.save);
             this.cutBtnEl.addEventListener('click', this.cut);
             this.copyBtnEl.addEventListener('click', this.copy);
