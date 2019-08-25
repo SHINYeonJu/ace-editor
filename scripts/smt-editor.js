@@ -147,7 +147,8 @@ var aceEditor = (
 
         aceEditor.prototype.selectAll = function () { //모두선택
             console.log("selectAll : ");
-            this.editor.selectAll();
+            this.editor.focus();
+            document.execCommand('selectAll');
         };
 
         aceEditor.prototype.undo = function () { //undo
