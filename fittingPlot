@@ -1,0 +1,148 @@
+package com.skhynix.dmr;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+
+public class FittingPlotGen {
+	
+	public static void main(String[] args) {
+		File file = new File("C:\\test\\fittingPlot\\2.dat");
+		FittingPlotModel instance;
+		try {
+			instance = new FittingPlotModel(file);
+			System.out.println("isLdmos: " + instance.isLdmos());
+			System.out.println("isISub: " + instance.isISub());
+			
+			if (instance.isLdmos()) {
+				IdbgNetList.create();
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static class FittingPlotModel {
+		private String w;
+		private String l;
+		private String t;
+		private int sizeIdVgY;
+		private int sizeIbVgY;
+		private boolean isDefaultIbVgY;
+		
+		public FittingPlotModel(File file) throws Exception {
+			FileInputStream fis = null;
+			BufferedReader in = null;
+			try {
+				fis = new FileInputStream(file);
+				in = new BufferedReader(new InputStreamReader(fis, "UTF-8"));
+				String rLine="";
+				while((rLine=in.readLine())!=null) {
+					if (startWithInstance(rLine)) {
+						extraInstance(rLine);
+					} else if (startWithIdVg(rLine)) {
+						extraIdVg(in.readLine());
+					} else if (startWithIbVg(rLine)) {
+						extraIbVg(in);
+					}
+				}
+			} finally {
+				if (fis != null) {
+					try {
+						fis.close();
+					} catch (Exception e) {}
+				}
+				if (in != null) {
+					try {
+						in.close();
+					} catch (Exception e) {}
+				}
+			}
+		}
+		
+		public boolean isLdmos() {
+			return !this.t.equals("25") && sizeIdVgY == 1 && isDefaultIbVgY;
+		}
+		
+		public boolean isISub() {
+			return !isLdmos() && this.t.equals("25") && sizeIbVgY == 1;
+		}
+		
+		private boolean startWithInstance(String str) {
+			return str.startsWith("Instance");
+		}
+		
+		private void extraInstance(String str) {
+			int startIndex = str.indexOf("{");
+			int endIndex = str.length() - 1; // } index
+			String tmp = str.substring(startIndex, endIndex);
+			String[] vList = tmp.split(",");
+			for (String keyValue: vList) {
+				String[] keyAndValue = keyValue.split("=");
+				String key = keyAndValue[0].trim();
+				String value = keyAndValue[1].trim();
+				
+				switch (key) {
+					case "W":
+						this.w = value;
+						break;
+					case "L":
+						this.l = value;
+						break;
+					case "T":
+						this.t = value;
+						break;
+					default:
+						break;
+				}
+				
+			}
+		}
+		
+		private boolean startWithIdVg(String str) {
+			return str.indexOf("{Id_Vg}") > -1;
+		}
+		
+		private void extraIdVg(String str) {
+			sizeIdVgY = countY(str);
+		}
+		
+		private int countY(String str) {
+			int sizeY = 0;
+			for (String tmp: str.split(",")) {
+				if (tmp.indexOf("Id(Vbs") > -1) {
+					sizeY++;
+				}
+			}
+			return sizeY;
+		}
+
+		private boolean startWithIbVg(String str) {
+			return str.indexOf("{Ib_Vg}") > -1;
+		}
+		
+		private void extraIbVg(BufferedReader in) throws Exception {
+			String rLine="";
+			while((rLine=in.readLine())!=null) {
+				if (rLine.indexOf("{Vgs") > -1) {
+					sizeIbVgY = countY(rLine);
+				} else {
+					String[] vList = rLine.split(",");
+					if (vList.length == 2 && vList[1].trim().equals("0.000000")) {
+						this.isDefaultIbVgY = true;
+					} else {
+						this.isDefaultIbVgY = false;
+					}
+				}
+			}
+		}
+	}
+
+	public static class IdbgNetList {
+		public static void create() {
+			
+		}
+	}
+}
