@@ -1,0 +1,77 @@
+private void convertNoiseParameters(PmnReader pmn) throws IOException {
+		StringReader reader = new StringReader(this.origin);
+		BufferedReader bufferedReader = new BufferedReader(reader);
+		StringBuilder builder = new StringBuilder();
+		String rLine="";
+		
+		int step = 0;
+		
+		try {
+			while ((rLine = bufferedReader.readLine()) != null) {
+				String newLine = rLine;
+				boolean hasKeyword = false;
+				int end = -1;
+				String mod = null;
+				String convertLine = null;
+				
+				switch (step) {
+					case 0:
+						if (rLine.contains("NOISE PARAMETERS")) {
+							step = 1;
+						}
+						break;
+					case 1:
+						convertLine = rLine;
+						if (rLine.contains("DIODE PARAMETERS")) {
+							step = 2;
+						} else if (!rLine.startsWith("*********")) {
+							// 읽는 작업
+							String colsOneKey = rLine.substring(1, 12).trim(); // 'fnoimod   '
+							String colsOneValue = rLine.substring(14, 41).trim(); // '1.0                        '
+							String colsTwoKey = rLine.substring(41, 52); // 'tnoimod   '
+							String colsTwoValue = rLine.substring(54, 81); // '0.0                        '
+							String colsThreeKey = rLine.substring(81, 92); // 'xtid      '
+							String colsThreeValue = rLine.substring(94); // '45100000.0'
+							
+							LinkedHashMap<String, String> tMap = new LinkedHashMap<String, String>();
+							tMap.put(colsOneKey, colsOneValue);
+							tMap.put(colsTwoKey, colsTwoValue);
+							tMap.put(colsThreeKey, colsThreeValue);
+							
+							// 교체 대상 판단 후 교체
+							if (pmn.getMed("fnoimod") && tMap.containsKey("fnoimod")) {
+								tMap.put("fnoimod", "NEW VALUE");
+							}
+							
+							// 새로운 라인을 만드는 작업
+							StringBuilder sb = new StringBuilder("+");
+							
+							Iterator<String> keys = tMap.keySet().iterator();
+							while (keys.hasNext()) {
+								String key = keys.next();
+								sb.append(rpad(key, 10));
+								sb.append("= ");
+								sb.append(rpad(tMap.get(key), 25));
+							}
+							convertLine = sb.toString().trim();
+						}
+						
+						builder.append(convertLine + "\r\n");
+						break;
+					case 2:
+						break;
+					default:
+						break;
+				}
+				builder.append(newLine + "\r\n");
+			}
+			this.origin = builder.toString();
+			System.out.println("ORIGIN" + this.origin);
+		} catch (IOException e) {
+			
+		} finally {
+			reader.close();
+			bufferedReader.close();
+		}
+	}
+	
