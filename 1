@@ -1,0 +1,189 @@
+package com.skhynix.dmr;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+public class TrDataTranform {
+	public void process() {
+		List<HashMap<String, BigDecimal>> orgDataSet01 = this.getOrgDataSet01();
+	}
+	
+	/**
+	 * Select DB Data (vgs 기준 오름차순 정렬)
+	 * @return
+	 */
+	private List<HashMap<String, BigDecimal>> getOrgDataSet01() {
+		ArrayList<HashMap<String, BigDecimal>> list = new ArrayList<HashMap<String, BigDecimal>>();
+		
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("-0.5"));
+			put("idvg", new BigDecimal("9.6999997e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("-0.475"));
+			put("idvg", new BigDecimal("-1.8000001e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("-0.45"));
+			put("idvg", new BigDecimal("1.7000000e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("-0.425"));
+			put("idvg", new BigDecimal("1.0700000e-013"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("-0.4"));
+			put("idvg", new BigDecimal("1.07000000e-013"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("-0.375"));
+			put("idvg", new BigDecimal("2.7000000e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("17.975"));
+			put("idvg", new BigDecimal("1.5413800e-005"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("18"));
+			put("idvg", new BigDecimal("1.5423000e-005"));
+		}});
+		
+		return list;
+	}
+
+	/**
+	 * Select DB Data (idvg 기준 오름차순 정렬)
+	 * @return
+	 */
+	private List<HashMap<String, BigDecimal>> getOrgDataSet01Idvg() {
+		ArrayList<HashMap<String, BigDecimal>> list = new ArrayList<HashMap<String, BigDecimal>>();
+		
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("-0.05"));
+			put("idvg", new BigDecimal("-73999997e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("0.45"));
+			put("idvg", new BigDecimal("-6.8000002e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("0.475"));
+			put("idvg", new BigDecimal("-6.5000001e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("0.325"));
+			put("idvg", new BigDecimal("-6.0999999e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("0.075"));
+			put("idvg", new BigDecimal("-3.2000000e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("0.225"));
+			put("idvg", new BigDecimal("-4.8999999e-014"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("17.975"));
+			put("idvg", new BigDecimal("4.8155300e-004"));
+		}});
+		list.add(new HashMap<String, BigDecimal>() {{
+			put("vgs", new BigDecimal("18"));
+			put("idvg", new BigDecimal("4.9257599e-004"));
+		}});
+		return list;
+	}
+
+	private List<HashMap<String, BigDecimal>> getDxdyDataSet01(List<HashMap<String, BigDecimal>> orgDataSet01) {
+		List<HashMap<String, BigDecimal>> resultList = new ArrayList<HashMap<String, BigDecimal>>();
+		Iterator<HashMap<String, BigDecimal>> iter = orgDataSet01.iterator();
+		
+		HashMap<String, BigDecimal> prev = null;
+		while (iter.hasNext()) {
+			if (prev == null) {
+				prev = iter.next();
+			} else {
+				HashMap<String, BigDecimal> curr = iter.next();
+				BigDecimal val1 = curr.get("idvg").subtract(prev.get("idvg")); // 빼기
+				BigDecimal val2 = curr.get("vgs").subtract(prev.get("vgs")); // 빼기
+				
+				HashMap<String, BigDecimal> result = new HashMap<String, BigDecimal>();
+				result.put("vgs", prev.get("vgs"));
+				result.put("idvg_dxdy", val1.divide(val2, RoundingMode.HALF_UP)); // 반올림
+				
+				resultList.add(result);
+				
+				prev = curr;
+			}
+		}
+		return resultList;
+	}
+	
+	public String replaceVtm(String str) {
+		String regex1 = "(\\d+)nA\\*W\\/L";
+		String regex2 = "(\\d+)nA";
+		String regex3 = "Vtext";
+		
+		if (str.matches(regex1)) {
+			return str.replaceAll(regex1, "$1*(width/length)*E-9");
+		} else if (str.matches(regex2)) {
+			return str.replaceAll(regex2, "$1*E-9");
+		} else if (str.matches(regex3)) {
+			return "100*(width/length)*E-9";
+		}
+		return null;
+	}
+	
+	public HashMap<String, BigDecimal> getGmmax(List<HashMap<String, BigDecimal>> list) {
+		Iterator<HashMap<String, BigDecimal>> iter = list.iterator();
+		HashMap<String, BigDecimal> result = null;
+		
+		while (iter.hasNext()) {
+			HashMap<String, BigDecimal> item = iter.next();
+			if (result == null) {
+				result = item;
+			} else {
+				result = result.get("idvg_dxdy").compareTo(item.get("idvg_dxdy")) <= 0 ? item : result;
+			}
+		}
+		return result;
+	}
+	
+	public HashMap<String, BigDecimal> getIdGmmax(List<HashMap<String, BigDecimal>> list, BigDecimal vgsValue) {
+		Iterator<HashMap<String, BigDecimal>> iter = list.iterator();
+		HashMap<String, BigDecimal> result = null;
+		while (iter.hasNext()) {
+			HashMap<String, BigDecimal> item = iter.next();
+			if (item.get("vgs").equals(vgsValue)) {
+				result = item;
+				break;
+			}
+		}
+		return result;
+	}
+	
+	public static void main(String[] args) {
+		TrDataTranform instance = new TrDataTranform();
+		List<HashMap<String, BigDecimal>> resultList = instance.getDxdyDataSet01(instance.getOrgDataSet01());
+		Iterator<HashMap<String, BigDecimal>> iter = resultList.iterator();
+		while(iter.hasNext()) {
+			HashMap<String, BigDecimal> item = iter.next();
+			System.out.println("VGS: " + item.get("vgs") + ", IDVG_DXDY: " + item.get("idvg_dxdy"));
+		}
+		
+		System.out.println(instance.replaceVtm("123nA*W/L"));
+		System.out.println(instance.replaceVtm("321nA"));
+		System.out.println(instance.replaceVtm("Vtext"));
+		
+		
+		HashMap<String, BigDecimal> data = instance.getGmmax(resultList);
+		System.out.println("Gmmax: " + data.get("idvg_dxdy"));
+		System.out.println("vg_gmmax: " + data.get("vgs"));
+		
+		BigDecimal idGmmax = instance.getIdGmmax(instance.getOrgDataSet01(), data.get("vgs")).get("idvg");
+		System.out.println("id_gmmax: " + idGmmax);
+	}
+}
