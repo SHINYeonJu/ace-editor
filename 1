@@ -1,0 +1,25 @@
+
+	
+	public static void main(String[] args) {
+		TrDataTranform instance = new TrDataTranform();
+		List<HashMap<String, BigDecimal>> resultList = instance.getDxdyDataSet01(instance.getOrgDataSet01());
+		Iterator<HashMap<String, BigDecimal>> iter = resultList.iterator();
+		while(iter.hasNext()) {
+			HashMap<String, BigDecimal> item = iter.next();
+			System.out.println("VGS: " + item.get("vgs") + ", IDVG_DXDY: " + item.get("idvb_dxdy"));
+		}
+		
+		System.out.println(instance.replaceVtm("123nA*W/L"));
+		System.out.println(instance.replaceVtm("321nA"));
+		System.out.println(instance.replaceVtm("Vtext"));
+		
+		
+		HashMap<String, BigDecimal> data = instance.getGmmax(resultList);
+		System.out.println("Gmmax: " + data.get("idvb_dxdy"));
+		System.out.println("vg_gmmax: " + data.get("vgs"));
+		
+		BigDecimal idGmmax = instance.getIdGmmax(instance.getOrgDataSet01(), data.get("vgs")).get("idvb");
+		System.out.println("id_gmmax: " + idGmmax);
+		
+		System.out.println(instance.getVtlin(new BigDecimal("3.3888889e-8")));
+	}
