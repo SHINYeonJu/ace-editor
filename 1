@@ -1,0 +1,183 @@
+package com.skhynix.dmr;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+public class FittingPlotUtil {
+
+	public double maxe(String id, int seq) throws Exception {
+		List<HashMap<String, Double>> simList = this.getSimList(id, seq);
+		List<HashMap<String, Double>> datList = this.getDatList(id, seq);
+		
+		if (simList.size() != datList.size()) {
+			// 문제가 있음
+			throw new Exception("Not equals lists: simList size(" + simList.size() + "), datList size(" + datList.size() + ")");
+		}
+		
+		double maxOfDifferenceY = this.getMaxOfDifferenceY(datList, simList);
+		double absMaxY = this.getAbsMaxY(datList, simList);
+		return maxOfDifferenceY / absMaxY * 100;
+	}
+	
+	public double rmse(String id, int seq) {
+		List<HashMap<String, Double>> simList = this.getSimList(id, seq);
+		List<HashMap<String, Double>> datList = this.getDatList(id, seq);
+		
+		double sumOfDifferenceY = this.getSumOfDifferenceY(datList, simList);
+		return Math.sqrt(sumOfDifferenceY / datList.size()) * 100;
+	}
+	
+	private double getSumOfDifferenceY(List<HashMap<String, Double>> datList, List<HashMap<String, Double>> simList) {
+		HashMap<Double, HashMap<String, Double>> simMap = this.convertListToMap(simList);
+		double threshold = this.getMax(datList);
+		double sumY = 0;
+		for (HashMap<String, Double> dat: datList) {
+			double datX = dat.get("X");
+			System.out.println("datX : "+datX);
+			System.out.println("threshold::"+threshold);
+			HashMap<String, Double> sim = simMap.get(datX);
+			sumY += pow(dat.get("Y1"), sim.get("Y1"), threshold);
+			sumY += pow(dat.get("Y2"), sim.get("Y2"), threshold);
+			sumY += pow(dat.get("Y3"), sim.get("Y3"), threshold);
+			sumY += pow(dat.get("Y4"), sim.get("Y4"), threshold);
+			sumY += pow(dat.get("Y5"), sim.get("Y5"), threshold);
+			System.out.println("sumY : "+sumY);
+//			sumY += pow(dat.get("Y6"), sim.get("Y6"), threshold);
+//			sumY += pow(dat.get("Y7"), sim.get("Y7"), threshold);
+//			sumY += pow(dat.get("Y8"), sim.get("Y8"), threshold);
+//			sumY += pow(dat.get("Y9"), sim.get("Y9"), threshold);
+//			sumY += pow(dat.get("Y10"), sim.get("Y10"), threshold);
+		}
+		return sumY;
+	}
+	
+	private double pow(double datY, double simY, double threshold) {
+		System.out.println(Math.pow((datY - simY) / threshold, 2));
+		return Math.pow((datY - simY) / threshold, 2);
+	}
+	
+	private double getMaxOfDifferenceY(List<HashMap<String, Double>> datList, List<HashMap<String, Double>> simList) {
+		HashMap<Double, HashMap<String, Double>> simMap = this.convertListToMap(simList);
+		double maxY = 0;
+		for (HashMap<String, Double> dat: datList) {
+			double datX = dat.get("X");
+			HashMap<String, Double> sim = simMap.get(datX);
+			if (maxY == 0) {
+				maxY = Math.abs(dat.get("Y1") - sim.get("Y1"));
+			} else {
+				maxY = Math.max(maxY, Math.abs(dat.get("Y1") - sim.get("Y1")));
+			}
+			maxY = Math.max(maxY, Math.abs(dat.get("Y2") - sim.get("Y2")));
+			maxY = Math.max(maxY, Math.abs(dat.get("Y3") - sim.get("Y3")));
+			maxY = Math.max(maxY, Math.abs(dat.get("Y4") - sim.get("Y4")));
+			maxY = Math.max(maxY, Math.abs(dat.get("Y5") - sim.get("Y5")));
+//			maxY = Math.max(maxY, Math.abs(dat.get("Y6") - sim.get("Y6")));
+//			maxY = Math.max(maxY, Math.abs(dat.get("Y7") - sim.get("Y7")));
+//			maxY = Math.max(maxY, Math.abs(dat.get("Y8") - sim.get("Y8")));
+//			maxY = Math.max(maxY, Math.abs(dat.get("Y9") - sim.get("Y9")));
+//			maxY = Math.max(maxY, Math.abs(dat.get("Y10") - sim.get("Y10")));
+		}
+		return maxY;
+	}
+	
+	private double getAbsMaxY(List<HashMap<String, Double>> datList, List<HashMap<String, Double>> simList) {
+		double maxDat = this.getMax(datList);
+		double maxSim = this.getMax(simList);
+		return Math.abs(Math.max(maxDat, maxSim));
+	}
+	
+	private double getMax(List<HashMap<String, Double>> list) {
+		double maxY = 0;
+		for (HashMap<String, Double> data: list) {
+			if (maxY == 0) {
+				maxY = data.get("Y1");
+			} else {
+				maxY = Math.max(maxY, data.get("Y1"));
+			}
+			maxY = Math.max(maxY, data.get("Y2"));
+			maxY = Math.max(maxY, data.get("Y3"));
+			maxY = Math.max(maxY, data.get("Y4"));
+			maxY = Math.max(maxY, data.get("Y5"));
+//			maxY = Math.max(maxY, data.get("Y6"));
+//			maxY = Math.max(maxY, data.get("Y7"));
+//			maxY = Math.max(maxY, data.get("Y8"));
+//			maxY = Math.max(maxY, data.get("Y9"));
+//			maxY = Math.max(maxY, data.get("Y10"));
+		}
+		return maxY;
+	}
+	
+	private HashMap<Double, HashMap<String, Double>> convertListToMap(List<HashMap<String, Double>> list) {
+		HashMap<Double, HashMap<String, Double>> retMap = new HashMap<Double, HashMap<String, Double>>();
+		for (HashMap<String, Double> map: list) {
+			HashMap<String, Double> clone = new HashMap<String, Double>(map);
+			double x = clone.get("X");
+			clone.remove("X");
+			retMap.put(x, clone);
+		}
+		return retMap;
+	}
+	
+	private List<HashMap<String, Double>> getSimList(String id, int seq) {
+		// TODO. DB에서 데이터 가져오기
+		ArrayList<HashMap<String, Double>> simList = new ArrayList<HashMap<String, Double>>();
+		HashMap<String, Double> map;
+		map = new HashMap<String, Double>(){{
+			put("X", 0.1);
+			put("Y1", 0.1);
+			put("Y2", 0.2);
+			put("Y3", 0.3);
+			put("Y4", 0.4);
+			put("Y5", 0.5);
+		}};
+		simList.add(map);
+		map = new HashMap<String, Double>(){{
+			put("X", 0.3);
+			put("Y1", 0.5);
+			put("Y2", 0.4);
+			put("Y3", 0.3);
+			put("Y4", 0.2);
+			put("Y5", 0.1);
+		}};
+		simList.add(map);
+		return simList;
+	}
+	
+	private List<HashMap<String, Double>> getDatList(String id, int seq) {
+		// TODO. DB에서 데이터 가져오기
+		ArrayList<HashMap<String, Double>> datList = new ArrayList<HashMap<String, Double>>();
+		HashMap<String, Double> map;
+		map = new HashMap<String, Double>(){{
+			put("X", 0.3);
+			put("Y1", 0.11);
+			put("Y2", 0.22);
+			put("Y3", 0.3);
+			put("Y4", 0.14);
+			put("Y5", 0.15);
+		}};
+		datList.add(map);
+		
+		map = new HashMap<String, Double>(){{
+			put("X", 0.1);
+			put("Y1", 0.15);
+			put("Y2", 0.14);
+			put("Y3", 0.3);
+			put("Y4", 0.12);
+			put("Y5", 0.11);
+		}};
+		datList.add(map);
+		return datList;
+	}
+	
+	public static void main(String[] args) {
+		FittingPlotUtil util = new FittingPlotUtil();
+		try {
+			System.out.println("MAXE: " + util.maxe("", 0));
+			System.out.println("RMSE: " + util.rmse("", 0));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}
