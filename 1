@@ -1,0 +1,41 @@
+package com.skhynix.dmr;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class Test {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+        
+		
+	}
+	
+	public HashMap<String, String> test(int type) {
+        
+		String str = "-5.00000000e-01 -1.9553299e-17  3.4671015e-16 ";
+		String[] arrStr = str.split(" ");
+		ArrayList<String> strList = new ArrayList<String>();
+		
+		for (String item : arrStr) {
+			if (!item.trim().equals("")) {
+				strList.add(item.trim());
+			}
+		}
+		
+		HashMap<String, String> result = new HashMap<String, String>();
+		if (type == 0) { // type이 0이면 X타입 생성
+			result.put("X1", strList.get(0));
+			result.put("X2", strList.get(1));
+			result.put("X3", strList.get(2));
+		} else if (type == 1) { // type이 1이면 Y타입 생성
+			result.put("Y1", strList.get(1));
+			result.put("Y2", strList.get(2));
+		} else if (type == 2) { // type이 2면 Z타입 생성
+			result.put("Z1", strList.get(0));
+			result.put("Z2", strList.get(1));
+		}
+		return result;
+	}
+
+}
